@@ -31,7 +31,8 @@ class GameRules(unittest.TestCase):
         self.assertIn("if(possible())return", shuffle)
 
     def test_booster_and_match_use_shared_win(self):
-        self.assertGreaterEqual(SOURCE.count("if(done>=goal)win()"), 2)
+        self.assertRegex(SOURCE, r"if\\s*\\(done>=goal\\)\\s*\\{?\\s*win\\(\\)")
+        self.assertIn("if(done>=goal)win();else if(!possible())shuffle();", SOURCE)
 
     def test_cldc_no_stringbuilder(self):
         self.assertNotIn("StringBuilder", SOURCE)

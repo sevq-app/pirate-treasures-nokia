@@ -17,7 +17,7 @@ public final class MaratTreasures extends MIDlet {
   private final int[][] gems=new int[6][6],blocks=new int[6][6];
   private final int[] palette={0xE94E61,0x3ABBE8,0xE7BE45,0x68CE7B,0xA97DE9,0xF59A48};
   private int level=1,coins=500000,stars=0,moves,goal,done,kind,selectionX=-1,selectionY=-1,cx=2,cy=2;
-  private int screen=0,tools=0,won=0,active=0;
+  private int screen=0,tools=0,won=0,active=0,finished=0;
   private String notice="";
   private static final int MENU=0,PLAY=1,RESULT=2,SHOP=3,MAP=4,HELP=5;
   Game(MaratTreasures a){app=a;setFullScreenMode(true);load();}
@@ -35,7 +35,7 @@ public final class MaratTreasures extends MIDlet {
    }
    // Every fifth level introduces crates, every third level chains.
    int count=min(11,2+difficulty()/2);
-   if(kind==1||kind==2||kind==4)for(int i=0;i<count;i++){
+   if(kind==1||kind==2)for(int i=0;i<count;i++){
     int x=rng(6),y=rng(6);blocks[y][x]=kind==2?2:1;
    }
    if(kind==1||kind==2){goal=remainingBlocks();}
@@ -124,7 +124,7 @@ public final class MaratTreasures extends MIDlet {
    if(screen==RESULT)return;
    won=1;screen=RESULT;active=0;coins+=100+min(400,moves*20);
    stars+=moves>8?3:moves>3?2:1;
-   if(level<1000)level++;
+   if(level<1000)level++;else finished=1;
    save();
   }
   private void useTool(){
@@ -137,7 +137,7 @@ public final class MaratTreasures extends MIDlet {
    int act=0;try{act=getGameAction(key);}catch(Exception e){}
    boolean ok=key==53||key==-5||act==FIRE;
    boolean up=key==50||act==UP,down=key==56||act==DOWN,left=key==52||act==LEFT,right=key==54||act==RIGHT;
-   if(screen==MENU){if(ok){if(active==1)screen=PLAY;else startLevel();}else if(key==49)screen=MAP;else if(key==51)screen=SHOP;else if(key==55)screen=HELP;else if(key==48)app.quit();}
+   if(screen==MENU){if(ok){if(active==1)screen=PLAY;else if(finished==1)screen=MAP;else startLevel();}else if(key==49)screen=MAP;else if(key==51)screen=SHOP;else if(key==55)screen=HELP;else if(key==48)app.quit();}
    else if(screen==PLAY){
     if(key==48){selectionX=-1;tools=0;screen=MENU;}
     else if(key==49){tools=1;notice="Молоток 100: OK";}
@@ -147,7 +147,7 @@ public final class MaratTreasures extends MIDlet {
     else if(left)cx=max(0,cx-1);else if(right)cx=min(5,cx+1);
     else if(ok){if(tools!=0)useTool();else choose();}
    }
-   else if(screen==RESULT){if(ok){startLevel();}else if(key==48)screen=MENU;}
+   else if(screen==RESULT){if(ok){if(finished==1&&won==1)screen=MAP;else startLevel();}else if(key==48)screen=MENU;}
    else if(screen==SHOP){if(key==48||ok)screen=MENU;}
    else if(screen==MAP||screen==HELP){if(ok||key==48)screen=MENU;}
    repaint();
@@ -158,7 +158,7 @@ public final class MaratTreasures extends MIDlet {
    g.setColor(0xF7D98A);g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_BOLD,Font.SIZE_SMALL));line(g,"Сокровища Марата",2);
    g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));g.setColor(0xFFFFFF);
    if(screen==MENU){line(g,"Пиратские острова",25);line(g,new StringBuffer("Уровень ").append(level).append(" / 1000").toString(),45);line(g,new StringBuffer().append(coins).append(" монет").toString(),60);line(g,"OK - Играть",82);line(g,"1 - Острова",98);line(g,"3 - Бонусы  7 - Помощь",114);line(g,"0 - Выход",133);return;}
-   if(screen==RESULT){line(g,won==1?"ПОБЕДА!":"ХОДЫ КОНЧИЛИСЬ",38);line(g,won==1?"Сундук открыт!":"Попробуй ещё!",59);line(g,won==1?"+ монеты!":"9 - ещё 5 ходов",79);line(g,"OK - продолжить",104);line(g,"0 - меню",123);return;}
+   if(screen==RESULT){line(g,won==1?(finished==1?"1000 УРОВНЕЙ!":"ПОБЕДА!"):"ХОДЫ КОНЧИЛИСЬ",38);line(g,won==1?(finished==1?"Все острова твои!":"Сундук открыт!"):"Попробуй ещё!",59);line(g,won==1?"+ монеты!":"Повтори уровень",79);line(g,finished==1&&won==1?"OK - карта":"OK - продолжить",104);line(g,"0 - меню",123);return;}
    if(screen==MAP){line(g,"20 островов по 50",30);line(g,new StringBuffer("Остров ").append((level-1)/50+1).toString(),52);line(g,new StringBuffer("Уровень ").append(level).append(" / 1000").toString(),70);line(g,new StringBuffer("Звёзды: ").append(stars).toString(),90);line(g,"OK - назад",121);return;}
    if(screen==SHOP){line(g,"Молоток: 100 мон.",33);line(g,"Бомба: 150 мон.",53);line(g,"5 ходов: 500 мон.",73);line(g,"В игре: 1, 3, 9",94);line(g,"0 - назад",121);return;}
    if(screen==HELP){line(g,"2 4 6 8 - движение",30);line(g,"5 / OK - выбор",49);line(g,"Меняй соседние",68);line(g,"Собирай 3 и больше",87);line(g,"1 молоток 3 бомба",106);line(g,"9 пять ходов 0 меню",125);return;}
@@ -198,7 +198,7 @@ public final class MaratTreasures extends MIDlet {
     for(int y=0;y<6;y++)for(int x=0;x<6;x++)b[p++]=(byte)gems[y][x];
     for(int y=0;y<6;y++)for(int x=0;x<6;x++)b[p++]=(byte)blocks[y][x];
     int sum=0;for(int i=0;i<85;i++)sum=(sum+(b[i]&255))&65535;
-    b[85]=(byte)(sum>>8);b[86]=(byte)sum;b[87]=42;
+    b[85]=(byte)(sum>>8);b[86]=(byte)sum;b[87]=(byte)(finished==1?43:42);
     if(rs.getNumRecords()<2)rs.addRecord(b,0,b.length);else rs.setRecord(2,b,0,b.length);
    }catch(Exception e){}finally{if(rs!=null)try{rs.closeRecordStore();}catch(Exception e){}}
   }
@@ -221,7 +221,9 @@ public final class MaratTreasures extends MIDlet {
     }
     if(rs.getNumRecords()>1){
      byte[] b=rs.getRecord(2);
-     if(b.length==88&&b[0]==2&&b[1]==1&&b[87]==42){
+     if(b.length==88&&b[0]==2&&(b[87]==42||b[87]==43)){
+      if(b[87]==43&&level==1000)finished=1;
+      if(b[1]==1){
       int sum=0;for(int i=0;i<85;i++)sum=(sum+(b[i]&255))&65535;
       int stored=((b[85]&255)<<8)|(b[86]&255);
       int lv=((b[2]&255)<<8)|(b[3]&255);
@@ -238,6 +240,7 @@ public final class MaratTreasures extends MIDlet {
        int p=13;for(int y=0;y<6;y++)for(int x=0;x<6;x++)gems[y][x]=b[p++]&255;
        for(int y=0;y<6;y++)for(int x=0;x<6;x++)blocks[y][x]=b[p++]&255;
        active=1;screen=MENU;notice="";selectionX=-1;selectionY=-1;
+      }
       }
      }
     }

@@ -110,7 +110,7 @@ public final class MaratTreasures extends MIDlet {
    else if(!possible())shuffle();
   }
   private void choose(){
-   if(!possible()){shuffle();notice="Перемешано";return;}
+   if(!possible()){shuffle();notice="Перемешано";selectionX=-1;save();return;}
    if(blocks[cy][cx]>0){notice="Фишка закрыта";selectionX=-1;return;}
    if(selectionX<0){selectionX=cx;selectionY=cy;return;}
    if(selectionX==cx&&selectionY==cy){selectionX=-1;return;}
@@ -120,7 +120,13 @@ public final class MaratTreasures extends MIDlet {
    else{swap(selectionX,selectionY,cx,cy);moves--;notice="";removeMatches();}
    selectionX=-1;save();
   }
-  private void win(){won=1;screen=RESULT;coins+=100+min(400,moves*20);stars+=moves>8?3:moves>3?2:1;if(level<1000)level++;save();}
+  private void win(){
+   if(screen==RESULT)return;
+   won=1;screen=RESULT;coins+=100+min(400,moves*20);
+   stars+=moves>8?3:moves>3?2:1;
+   if(level<1000)level++;
+   save();
+  }
   private void useTool(){
    if(tools==1){if(coins<100){notice="Мало монет";return;}coins-=100;gems[cy][cx]=rng(6);if(blocks[cy][cx]>0){blocks[cy][cx]=0;if(kind==1||kind==2)done++;}tools=0;notice="Молоток";}
    else if(tools==2){if(coins<150){notice="Мало монет";return;}coins-=150;for(int y=max(0,cy-1);y<=min(5,cy+1);y++)for(int x=max(0,cx-1);x<=min(5,cx+1);x++){gems[y][x]=rng(6);if(blocks[y][x]>0){blocks[y][x]=0;if(kind==1||kind==2)done++;}}tools=0;notice="Бомба";}

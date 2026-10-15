@@ -1,0 +1,6 @@
+<project name="MaratTreasures" default="jar">
+ <property name="src" value="src"/>
+ <property name="out" value="build"/>
+ <target name="compile"><mkdir dir="${out}"/><javac srcdir="${src}" destdir="${out}" source="1.3" target="1.1" bootclasspath="${wtk.home}/lib/cldcapi11.jar:${wtk.home}/lib/midpapi20.jar" includeantruntime="false" encoding="UTF-8"/></target>
+ <target name="jar" depends="compile"><jar destfile="MaratTreasures.jar" basedir="${out}"><manifest><attribute name="MIDlet-1" value="Сокровища Марата,,MaratTreasures"/><attribute name="MIDlet-Name" value="Сокровища Марата"/><attribute name="MIDlet-Version" value="0.1.0"/><attribute name="MIDlet-Vendor" value="Marat"/><attribute name="MicroEdition-Configuration" value="CLDC-1.1"/><attribute name="MicroEdition-Profile" value="MIDP-2.0"/></manifest></jar></target>
+</project>

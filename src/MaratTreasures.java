@@ -58,14 +58,16 @@ public final class MaratTreasures extends MIDlet {
    }return false;
   }
   private void shuffle(){
-   for(int i=0;i<200;i++){
-    int x=rng(6),y=rng(6),a=rng(6),b=rng(6);
-    if(blocks[y][x]==0&&blocks[b][a]==0)swap(x,y,a,b);
+   // Rebuild without automatic matches. Do not erase mission obstacles.
+   for(int attempt=0;attempt<150;attempt++){
+    for(int y=0;y<6;y++)for(int x=0;x<6;x++){
+     int v;do{v=rng(6);}while((x>1&&gems[y][x-1]==v&&gems[y][x-2]==v)||(y>1&&gems[y-1][x]==v&&gems[y-2][x]==v));
+     gems[y][x]=v;
+    }
+    if(possible())return;
    }
-   // Guarantee at least one available swap on a clear part of the board.
-   if(!possible()){for(int y=0;y<3;y++)for(int x=0;x<3;x++)blocks[y][x]=0;
-    gems[0][0]=0;gems[0][1]=1;gems[0][2]=0;gems[1][1]=0;gems[1][2]=1;
-   }
+   // No playable swaps: give the player a free reshuffle on next move.
+   notice="Нет ходов: перемешай";
   }
   private void removeMatches(){
    for(int round=0;round<24;round++){
@@ -92,6 +94,7 @@ public final class MaratTreasures extends MIDlet {
    else if(!possible())shuffle();
   }
   private void choose(){
+   if(!possible()){shuffle();notice="Перемешано";return;}
    if(blocks[cy][cx]>0){notice="Фишка закрыта";return;}
    if(selectionX<0){selectionX=cx;selectionY=cy;return;}
    if(selectionX==cx&&selectionY==cy){selectionX=-1;return;}

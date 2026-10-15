@@ -1,0 +1,66 @@
+name: Сборка Сокровищ Марата
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Получить код
+        uses: actions/checkout@v4
+      - name: Установить Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Скачать инструменты
+        run: |
+          set -eu
+          mkdir -p tools build/classes dist
+          curl -fLsS --retry 3 -o tools/cldcapi11.jar https://repo.maven.apache.org/maven2/org/microemu/cldcapi11/2.0.4/cldcapi11-2.0.4.jar
+          curl -fLsS --retry 3 -o tools/midpapi20.jar https://repo.maven.apache.org/maven2/org/microemu/midpapi20/2.0.4/midpapi20-2.0.4.jar
+          curl -fLsS --retry 3 -o tools/proguard.jar https://repo.maven.apache.org/maven2/net/sf/proguard/proguard-base/6.2.2/proguard-base-6.2.2.jar
+      - name: Компилировать Java ME
+        run: |
+          javac -source 1.7 -target 1.7 -bootclasspath tools/cldcapi11.jar:tools/midpapi20.jar -encoding UTF-8 -d build/classes src/MaratTreasures.java
+          jar cf build/raw.jar -C build/classes .
+      - name: Подготовить классы для CLDC
+        run: |
+          java -cp tools/proguard.jar proguard.ProGuard @proguard.pro
+          test -s build/preverified.jar
+      - name: Создать JAR и JAD
+        run: |
+          set -eu
+          cat > build/MANIFEST.MF <<'EOF'
+          Manifest-Version: 1.0
+          MIDlet-Name: Сокровища Марата
+          MIDlet-Version: 0.1.0
+          MIDlet-Vendor: Marat
+          MIDlet-1: Сокровища Марата,,MaratTreasures
+          MicroEdition-Configuration: CLDC-1.1
+          MicroEdition-Profile: MIDP-2.0
+
+          EOF
+          cp build/preverified.jar dist/MaratTreasures.jar
+          jar ufm dist/MaratTreasures.jar build/MANIFEST.MF
+          jar tf dist/MaratTreasures.jar | grep -q '^MaratTreasures.class$'
+          SIZE=$(wc -c < dist/MaratTreasures.jar | tr -d ' ')
+          cat > dist/MaratTreasures.jad <<EOF
+          MIDlet-Name: Сокровища Марата
+          MIDlet-Version: 0.1.0
+          MIDlet-Vendor: Marat
+          MIDlet-1: Сокровища Марата,,MaratTreasures
+          MicroEdition-Configuration: CLDC-1.1
+          MicroEdition-Profile: MIDP-2.0
+          MIDlet-Jar-URL: MaratTreasures.jar
+          MIDlet-Jar-Size: $SIZE
+          EOF
+          test -s dist/MaratTreasures.jad
+      - name: Опубликовать файлы для Nokia
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sokrovishcha-Marata-Nokia
+          path: |
+            dist/MaratTreasures.jar
+            dist/MaratTreasures.jad
+          if-no-files-found: error

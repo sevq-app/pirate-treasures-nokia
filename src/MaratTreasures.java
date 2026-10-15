@@ -26,8 +26,8 @@ public final class MaratTreasures extends MIDlet {
    g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
    if(mode==1){g.drawString("Уровень пройден!",w/2,45,Graphics.TOP|Graphics.HCENTER);g.drawString("OK - дальше",w/2,70,Graphics.TOP|Graphics.HCENTER);return;}
    if(mode==2){g.drawString("Ходы закончились",w/2,45,Graphics.TOP|Graphics.HCENTER);g.drawString("OK - повторить",w/2,70,Graphics.TOP|Graphics.HCENTER);return;}
-   g.drawString("Ур."+level+"  "+coins+" мон.",2,18,Graphics.TOP|Graphics.LEFT);
-   g.drawString("Ходы:"+moves+"  "+score+"/"+target,2,31,Graphics.TOP|Graphics.LEFT);
+   g.drawString(new StringBuffer().append("Ур.").append(level).append("  ").append(coins).append(" мон.").toString(),2,18,Graphics.TOP|Graphics.LEFT);
+   g.drawString(new StringBuffer().append("Ходы:").append(moves).append("  ").append(score).append("/").append(target).toString(),2,31,Graphics.TOP|Graphics.LEFT);
    int cell=Math.min((w-8)/6,(h-62)/6);if(cell<8)cell=8;
    int ox=(w-cell*6)/2,oy=46;
    for(int y=0;y<6;y++)for(int x=0;x<6;x++){

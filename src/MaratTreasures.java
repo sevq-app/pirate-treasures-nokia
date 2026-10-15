@@ -17,7 +17,7 @@ public final class MaratTreasures extends MIDlet {
   private final int[][] gems=new int[6][6],blocks=new int[6][6];
   private final int[] palette={0xE94E61,0x3ABBE8,0xE7BE45,0x68CE7B,0xA97DE9,0xF59A48};
   private int level=1,coins=500000,stars=0,moves,goal,done,kind,selectionX=-1,selectionY=-1,cx=2,cy=2;
-  private int screen=0,tools=0,won=0;
+  private int screen=0,tools=0,won=0,active=0;
   private String notice="";
   private static final int MENU=0,PLAY=1,RESULT=2,SHOP=3,MAP=4,HELP=5;
   Game(MaratTreasures a){app=a;setFullScreenMode(true);load();}
@@ -40,7 +40,7 @@ public final class MaratTreasures extends MIDlet {
    }
    if(kind==1||kind==2){goal=remainingBlocks();}
    if(!possible())shuffle();
-   screen=PLAY;save();repaint();
+   screen=PLAY;active=1;save();repaint();
   }
   private int remainingBlocks(){int n=0;for(int y=0;y<6;y++)for(int x=0;x<6;x++)if(blocks[y][x]>0)n++;return n;}
   private boolean match(){
@@ -106,7 +106,7 @@ public final class MaratTreasures extends MIDlet {
     for(int x=0;x<6;x++){int dest=5;for(int y=5;y>=0;y--)if(!marked[y][x])gems[dest--][x]=gems[y][x];while(dest>=0)gems[dest--][x]=rng(6);}
    }
    if(done>=goal){win();}
-   else if(moves<=0){won=0;screen=RESULT;save();}
+   else if(moves<=0){won=0;screen=RESULT;active=0;save();}
    else if(!possible())shuffle();
   }
   private void choose(){
@@ -122,7 +122,7 @@ public final class MaratTreasures extends MIDlet {
   }
   private void win(){
    if(screen==RESULT)return;
-   won=1;screen=RESULT;coins+=100+min(400,moves*20);
+   won=1;screen=RESULT;active=0;coins+=100+min(400,moves*20);
    stars+=moves>8?3:moves>3?2:1;
    if(level<1000)level++;
    save();
@@ -137,7 +137,7 @@ public final class MaratTreasures extends MIDlet {
    int act=0;try{act=getGameAction(key);}catch(Exception e){}
    boolean ok=key==53||key==-5||act==FIRE;
    boolean up=key==50||act==UP,down=key==56||act==DOWN,left=key==52||act==LEFT,right=key==54||act==RIGHT;
-   if(screen==MENU){if(ok)startLevel();else if(key==49)screen=MAP;else if(key==51)screen=SHOP;else if(key==55)screen=HELP;else if(key==48)app.quit();}
+   if(screen==MENU){if(ok){if(active==1)screen=PLAY;else startLevel();}else if(key==49)screen=MAP;else if(key==51)screen=SHOP;else if(key==55)screen=HELP;else if(key==48)app.quit();}
    else if(screen==PLAY){
     if(key==48){selectionX=-1;tools=0;screen=MENU;}
     else if(key==49){tools=1;notice="Молоток 100: OK";}
@@ -176,21 +176,72 @@ public final class MaratTreasures extends MIDlet {
    }
    g.setColor(0xFFFFFF);line(g,notice.length()>0?notice:"1 мол. 3 бом. 9 +5",h-17);
   }
+  // Record 1 keeps legacy progress; record 2 stores an optional live board.
   void save(){
-   try{RecordStore rs=RecordStore.openRecordStore("marat",true);
+   RecordStore rs=null;
+   try{
+    rs=RecordStore.openRecordStore("marat",true);
     byte[] d=new byte[12];d[0]=1;d[1]=(byte)(level>>8);d[2]=(byte)level;
     d[3]=(byte)(coins>>24);d[4]=(byte)(coins>>16);d[5]=(byte)(coins>>8);d[6]=(byte)coins;
     d[7]=(byte)(stars>>24);d[8]=(byte)(stars>>16);d[9]=(byte)(stars>>8);d[10]=(byte)stars;
     d[11]=(byte)(level+coins+stars);
-    if(rs.getNumRecords()==0)rs.addRecord(d,0,d.length);else rs.setRecord(1,d,0,d.length);rs.closeRecordStore();
-   }catch(Exception e){}
+    if(rs.getNumRecords()==0)rs.addRecord(d,0,d.length);else rs.setRecord(1,d,0,d.length);
+    // Fixed 88-byte snapshot: version, active, level, moves, goal, done,
+    // kind, cursor, 36 gems, 36 blocks, checksum.
+    byte[] b=new byte[88];b[0]=2;b[1]=(byte)active;
+    b[2]=(byte)(level>>8);b[3]=(byte)level;
+    b[4]=(byte)(moves>>8);b[5]=(byte)moves;
+    b[6]=(byte)(goal>>8);b[7]=(byte)goal;
+    b[8]=(byte)(done>>8);b[9]=(byte)done;
+    b[10]=(byte)kind;b[11]=(byte)cx;b[12]=(byte)cy;
+    int p=13;
+    for(int y=0;y<6;y++)for(int x=0;x<6;x++)b[p++]=(byte)gems[y][x];
+    for(int y=0;y<6;y++)for(int x=0;x<6;x++)b[p++]=(byte)blocks[y][x];
+    int sum=0;for(int i=0;i<85;i++)sum=(sum+(b[i]&255))&65535;
+    b[85]=(byte)(sum>>8);b[86]=(byte)sum;b[87]=42;
+    if(rs.getNumRecords()<2)rs.addRecord(b,0,b.length);else rs.setRecord(2,b,0,b.length);
+   }catch(Exception e){}finally{if(rs!=null)try{rs.closeRecordStore();}catch(Exception e){}}
   }
   void load(){
-   try{RecordStore rs=RecordStore.openRecordStore("marat",true);if(rs.getNumRecords()>0){
-    byte[] d=rs.getRecord(1);
-    if(d.length>=12&&d[0]==1){int lv=((d[1]&255)<<8)|(d[2]&255);int c=((d[3]&255)<<24)|((d[4]&255)<<16)|((d[5]&255)<<8)|(d[6]&255);int st=((d[7]&255)<<24)|((d[8]&255)<<16)|((d[9]&255)<<8)|(d[10]&255);if(d[11]==(byte)(lv+c+st)&&lv>=1&&lv<=1000&&c>=0){level=lv;coins=c;stars=max(0,st);}}
-    else if(d.length==6){int lv=((d[0]&255)<<8)|(d[1]&255);int c=((d[2]&255)<<24)|((d[3]&255)<<16)|((d[4]&255)<<8)|(d[5]&255);if(lv>=1&&lv<=1000&&c>=0){level=lv;coins=c;}}
-   }rs.closeRecordStore();}catch(Exception e){}
+   RecordStore rs=null;
+   try{
+    rs=RecordStore.openRecordStore("marat",true);
+    if(rs.getNumRecords()>0){
+     byte[] d=rs.getRecord(1);
+     if(d.length>=12&&d[0]==1){
+      int lv=((d[1]&255)<<8)|(d[2]&255);
+      int c=((d[3]&255)<<24)|((d[4]&255)<<16)|((d[5]&255)<<8)|(d[6]&255);
+      int st=((d[7]&255)<<24)|((d[8]&255)<<16)|((d[9]&255)<<8)|(d[10]&255);
+      if(d[11]==(byte)(lv+c+st)&&lv>=1&&lv<=1000&&c>=0){level=lv;coins=c;stars=max(0,st);}
+     }else if(d.length==6){
+      int lv=((d[0]&255)<<8)|(d[1]&255);
+      int c=((d[2]&255)<<24)|((d[3]&255)<<16)|((d[4]&255)<<8)|(d[5]&255);
+      if(lv>=1&&lv<=1000&&c>=0){level=lv;coins=c;}
+     }
+    }
+    if(rs.getNumRecords()>1){
+     byte[] b=rs.getRecord(2);
+     if(b.length==88&&b[0]==2&&b[1]==1&&b[87]==42){
+      int sum=0;for(int i=0;i<85;i++)sum=(sum+(b[i]&255))&65535;
+      int stored=((b[85]&255)<<8)|(b[86]&255);
+      int lv=((b[2]&255)<<8)|(b[3]&255);
+      int m=((b[4]&255)<<8)|(b[5]&255);
+      int target=((b[6]&255)<<8)|(b[7]&255);
+      int progress=((b[8]&255)<<8)|(b[9]&255);
+      int k=b[10]&255,px=b[11]&255,py=b[12]&255;
+      boolean valid=sum==stored&&lv==level&&m>0&&m<1000&&target>0&&target<1000
+       &&progress<target&&k==(level-1)%5&&px<6&&py<6;
+      for(int i=13;i<49;i++)if((b[i]&255)>5)valid=false;
+      for(int i=49;i<85;i++)if((b[i]&255)>2)valid=false;
+      if(valid){
+       moves=m;goal=target;done=progress;kind=k;cx=px;cy=py;
+       int p=13;for(int y=0;y<6;y++)for(int x=0;x<6;x++)gems[y][x]=b[p++]&255;
+       for(int y=0;y<6;y++)for(int x=0;x<6;x++)blocks[y][x]=b[p++]&255;
+       active=1;screen=MENU;notice="";selectionX=-1;selectionY=-1;
+      }
+     }
+    }
+   }catch(Exception e){}finally{if(rs!=null)try{rs.closeRecordStore();}catch(Exception e){}}
   }
  }
 }

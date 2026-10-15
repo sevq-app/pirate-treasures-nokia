@@ -48,6 +48,19 @@ class GameRules(unittest.TestCase):
             if kind == 4:
                 self.assertLessEqual(10 + level // 125, 18)
 
+    def test_final_level_has_ending(self):
+        self.assertIn("if(level<1000)level++;else finished=1;", SOURCE)
+        self.assertIn("if(finished==1&&won==1)screen=MAP", SOURCE)
+        self.assertIn("b[87]=(byte)(finished==1?43:42)", SOURCE)
+
+    def test_red_gem_levels_have_no_unrelated_obstacles(self):
+        self.assertIn("if(kind==1||kind==2)for(int i=0;i<count;i++)", SOURCE)
+        self.assertNotIn("kind==1||kind==2||kind==4", SOURCE)
+
+    def test_defeat_message_matches_controls(self):
+        self.assertIn("Повтори уровень", SOURCE)
+        self.assertNotIn("9 - ещё 5 ходов", SOURCE)
+
     def test_cldc_no_stringbuilder(self):
         self.assertNotIn("StringBuilder", SOURCE)
 

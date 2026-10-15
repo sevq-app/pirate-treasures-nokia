@@ -17,7 +17,7 @@ public final class MaratTreasures extends MIDlet {
   private final int[][] gems=new int[6][6],blocks=new int[6][6];
   private final int[] palette={0xE94E61,0x3ABBE8,0xE7BE45,0x68CE7B,0xA97DE9,0xF59A48};
   private int level=1,coins=500000,stars=0,moves,goal,done,kind,selectionX=-1,selectionY=-1,cx=2,cy=2;
-  private int screen=0,shop=0,tools=0,seed,won=0;
+  private int screen=0,tools=0,won=0;
   private String notice="";
   private static final int MENU=0,PLAY=1,RESULT=2,SHOP=3,MAP=4,HELP=5;
   Game(MaratTreasures a){app=a;setFullScreenMode(true);load();}
@@ -27,7 +27,6 @@ public final class MaratTreasures extends MIDlet {
   private int difficulty(){return (level-1)/50;}
   private void startLevel(){
    random.setSeed(81291L+level*13271L);
-   seed=level;
    kind=(level-1)%5;goal=kind==0?15+level/12:kind==1?8+level/30:kind==2?6+level/50:kind==3?14+level/15:10+level/20;
    moves=max(12,26-level/85);done=0;selectionX=-1;selectionY=-1;cx=2;cy=2;won=0;tools=0;
    for(int y=0;y<6;y++)for(int x=0;x<6;x++){
@@ -39,10 +38,11 @@ public final class MaratTreasures extends MIDlet {
    if(kind==1||kind==2||kind==4)for(int i=0;i<count;i++){
     int x=rng(6),y=rng(6);blocks[y][x]=kind==2?2:1;
    }
-   if(kind==1||kind==2){goal=count;}
+   if(kind==1||kind==2){goal=remainingBlocks();}
    if(!possible())shuffle();
    screen=PLAY;save();repaint();
   }
+  private int remainingBlocks(){int n=0;for(int y=0;y<6;y++)for(int x=0;x<6;x++)if(blocks[y][x]>0)n++;return n;}
   private boolean match(){
    for(int y=0;y<6;y++)for(int x=0;x<6;x++){
     int v=gems[y][x];if(v<0)continue;
@@ -87,7 +87,7 @@ public final class MaratTreasures extends MIDlet {
     if(count==0)break;
     for(int x=0;x<6;x++){int dest=5;for(int y=5;y>=0;y--)if(!marked[y][x])gems[dest--][x]=gems[y][x];while(dest>=0)gems[dest--][x]=rng(6);}
    }
-   if(done>=goal){won=1;screen=RESULT;coins+=100+min(400,moves*20);stars+=moves>8?3:moves>3?2:1;if(level<1000)level++;save();}
+   if(done>=goal){win();}
    else if(moves<=0){won=0;screen=RESULT;save();}
    else if(!possible())shuffle();
   }
@@ -101,11 +101,12 @@ public final class MaratTreasures extends MIDlet {
    else{moves--;notice="";removeMatches();}
    selectionX=-1;save();
   }
+  private void win(){won=1;screen=RESULT;coins+=100+min(400,moves*20);stars+=moves>8?3:moves>3?2:1;if(level<1000)level++;save();}
   private void useTool(){
    if(tools==1){if(coins<100){notice="Мало монет";return;}coins-=100;gems[cy][cx]=rng(6);if(blocks[cy][cx]>0){blocks[cy][cx]=0;if(kind==1||kind==2)done++;}tools=0;notice="Молоток";}
    else if(tools==2){if(coins<150){notice="Мало монет";return;}coins-=150;for(int y=max(0,cy-1);y<=min(5,cy+1);y++)for(int x=max(0,cx-1);x<=min(5,cx+1);x++){gems[y][x]=rng(6);if(blocks[y][x]>0){blocks[y][x]=0;if(kind==1||kind==2)done++;}}tools=0;notice="Бомба";}
    else if(tools==3){if(coins<500){notice="Мало монет";return;}coins-=500;moves+=5;tools=0;notice="+5 ходов";}
-   if(done>=goal){won=1;screen=RESULT;coins+=100;level=min(1000,level+1);}save();
+   if(done>=goal)win();else if(!possible())shuffle();save();
   }
   protected void keyPressed(int key){
    int act=0;try{act=getGameAction(key);}catch(Exception e){}
@@ -139,7 +140,7 @@ public final class MaratTreasures extends MIDlet {
    String title=kind==0?"Кристаллы":kind==1?"Сундуки":kind==2?"Цепи":kind==3?"Собери фишки":"Красные камни";
    g.drawString(new StringBuffer("Ур.").append(level).append(" ").append(coins).append("м").toString(),2,17,Graphics.TOP|Graphics.LEFT);
    g.drawString(new StringBuffer(title).append(" ").append(done).append("/").append(goal).toString(),2,30,Graphics.TOP|Graphics.LEFT);
-   g.drawString(new StringBuffer("Ходы: ").append(moves).toString(),90,30,Graphics.TOP|Graphics.RIGHT);
+   g.drawString(new StringBuffer("Х:").append(moves).toString(),w-2,30,Graphics.TOP|Graphics.RIGHT);
    int cell=min((w-8)/6,(h-67)/6);int ox=(w-cell*6)/2,oy=44;
    for(int y=0;y<6;y++)for(int x=0;x<6;x++){
     int px=ox+x*cell,py=oy+y*cell;g.setColor(0x315169);g.fillRect(px,py,cell-1,cell-1);

@@ -51,6 +51,16 @@ class GameRules(unittest.TestCase):
     def test_cldc_no_stringbuilder(self):
         self.assertNotIn("StringBuilder", SOURCE)
 
+    def test_resume_snapshot_and_backward_compatibility(self):
+        self.assertIn("byte[] b=new byte[88]", SOURCE)
+        self.assertIn("rs.setRecord(2,b,0,b.length)", SOURCE)
+        self.assertIn("rs.getRecord(2)", SOURCE)
+        self.assertIn("sum==stored&&lv==level", SOURCE)
+        self.assertIn("active=1;screen=MENU", SOURCE)
+        self.assertIn("if(active==1)screen=PLAY;else startLevel();", SOURCE)
+        self.assertIn("d.length==6", SOURCE)
+        self.assertIn("active=0;save();", SOURCE)
+
     def test_rms_save_and_load(self):
         self.assertIn("void save()", SOURCE)
         self.assertIn("void load()", SOURCE)

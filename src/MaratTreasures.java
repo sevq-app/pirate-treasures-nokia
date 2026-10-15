@@ -131,15 +131,15 @@ public final class MaratTreasures extends MIDlet {
    int w=getWidth(),h=getHeight();g.setColor(0x12283C);g.fillRect(0,0,w,h);
    g.setColor(0xF7D98A);g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_BOLD,Font.SIZE_SMALL));line(g,"Сокровища Марата",2);
    g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));g.setColor(0xFFFFFF);
-   if(screen==MENU){line(g,"Пиратские острова",25);line(g,"Уровень "+level+" / 1000",45);line(g,coins+" монет",60);line(g,"OK - Играть",82);line(g,"1 - Острова",98);line(g,"3 - Бонусы  7 - Помощь",114);line(g,"0 - Выход",133);return;}
+   if(screen==MENU){line(g,"Пиратские острова",25);line(g,new StringBuffer("Уровень ").append(level).append(" / 1000").toString(),45);line(g,new StringBuffer().append(coins).append(" монет").toString(),60);line(g,"OK - Играть",82);line(g,"1 - Острова",98);line(g,"3 - Бонусы  7 - Помощь",114);line(g,"0 - Выход",133);return;}
    if(screen==RESULT){line(g,won==1?"ПОБЕДА!":"ХОДЫ КОНЧИЛИСЬ",38);line(g,won==1?"Сундук открыт!":"Попробуй ещё!",59);line(g,won==1?"+ монеты!":"9 - ещё 5 ходов",79);line(g,"OK - продолжить",104);line(g,"0 - меню",123);return;}
-   if(screen==MAP){line(g,"20 островов по 50",30);line(g,"Остров "+((level-1)/50+1),52);line(g,"Уровень "+level+" / 1000",70);line(g,"Звёзды: "+stars,90);line(g,"OK - назад",121);return;}
+   if(screen==MAP){line(g,"20 островов по 50",30);line(g,new StringBuffer("Остров ").append((level-1)/50+1).toString(),52);line(g,new StringBuffer("Уровень ").append(level).append(" / 1000").toString(),70);line(g,new StringBuffer("Звёзды: ").append(stars).toString(),90);line(g,"OK - назад",121);return;}
    if(screen==SHOP){line(g,"Молоток: 100 мон.",33);line(g,"Бомба: 150 мон.",53);line(g,"5 ходов: 500 мон.",73);line(g,"В игре: 1, 3, 9",94);line(g,"0 - назад",121);return;}
    if(screen==HELP){line(g,"2 4 6 8 - движение",30);line(g,"5 / OK - выбор",49);line(g,"Меняй соседние",68);line(g,"Собирай 3 и больше",87);line(g,"1 молоток 3 бомба",106);line(g,"9 пять ходов 0 меню",125);return;}
    String title=kind==0?"Кристаллы":kind==1?"Сундуки":kind==2?"Цепи":kind==3?"Собери фишки":"Красные камни";
-   g.drawString("Ур."+level+" "+coins+"м",2,17,Graphics.TOP|Graphics.LEFT);
-   g.drawString(title+" "+done+"/"+goal,2,30,Graphics.TOP|Graphics.LEFT);
-   g.drawString("Ходы: "+moves,90,30,Graphics.TOP|Graphics.RIGHT);
+   g.drawString(new StringBuffer("Ур.").append(level).append(" ").append(coins).append("м").toString(),2,17,Graphics.TOP|Graphics.LEFT);
+   g.drawString(new StringBuffer(title).append(" ").append(done).append("/").append(goal).toString(),2,30,Graphics.TOP|Graphics.LEFT);
+   g.drawString(new StringBuffer("Ходы: ").append(moves).toString(),90,30,Graphics.TOP|Graphics.RIGHT);
    int cell=min((w-8)/6,(h-67)/6);int ox=(w-cell*6)/2,oy=44;
    for(int y=0;y<6;y++)for(int x=0;x<6;x++){
     int px=ox+x*cell,py=oy+y*cell;g.setColor(0x315169);g.fillRect(px,py,cell-1,cell-1);

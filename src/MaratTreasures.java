@@ -39,7 +39,7 @@ public final class MaratTreasures extends MIDlet {
    if(kind==1||kind==2||kind==4)for(int i=0;i<count;i++){
     int x=rng(6),y=rng(6);blocks[y][x]=kind==2?2:1;
    }
-   if(kind==1||kind==2||kind==4){goal=count;}
+   if(kind==1||kind==2){goal=count;}
    if(!possible())shuffle();
    screen=PLAY;save();repaint();
   }
@@ -87,7 +87,7 @@ public final class MaratTreasures extends MIDlet {
     if(count==0)break;
     for(int x=0;x<6;x++){int dest=5;for(int y=5;y>=0;y--)if(!marked[y][x])gems[dest--][x]=gems[y][x];while(dest>=0)gems[dest--][x]=rng(6);}
    }
-   if(done>=goal){won=1;screen=RESULT;coins+=100+min(400,moves*20);stars+=moves>8?3:moves>3?2:1;level=min(1000,level+1);save();}
+   if(done>=goal){won=1;screen=RESULT;coins+=100+min(400,moves*20);stars+=moves>8?3:moves>3?2:1;if(level<1000)level++;save();}
    else if(moves<=0){won=0;screen=RESULT;save();}
    else if(!possible())shuffle();
   }
@@ -121,8 +121,8 @@ public final class MaratTreasures extends MIDlet {
     else if(left)cx=max(0,cx-1);else if(right)cx=min(5,cx+1);
     else if(ok){if(tools!=0)useTool();else choose();}
    }
-   else if(screen==RESULT){if(ok){if(won==1&&level==1000){screen=MENU;}else startLevel();}else if(key==48)screen=MENU;}
-   else if(screen==SHOP){if(key==48)screen=MENU;else if(ok){if(coins>=500){coins-=500;coins+=500;notice="Бонусы: 1,3,9 в игре";}}}
+   else if(screen==RESULT){if(ok){startLevel();}else if(key==48)screen=MENU;}
+   else if(screen==SHOP){if(key==48||ok)screen=MENU;}
    else if(screen==MAP||screen==HELP){if(ok||key==48)screen=MENU;}
    repaint();
   }

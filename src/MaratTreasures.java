@@ -27,7 +27,7 @@ public final class MaratTreasures extends MIDlet {
   private int difficulty(){return (level-1)/50;}
   private void startLevel(){
    random.setSeed(81291L+level*13271L);
-   kind=(level-1)%5;goal=kind==0?15+level/12:kind==1?8+level/30:kind==2?6+level/50:kind==3?14+level/15:10+level/20;
+   kind=(level-1)%5;goal=kind==0?15+level/80:kind==1?8:kind==2?6:kind==3?14+level/90:10+level/125;
    moves=max(12,26-level/85);done=0;selectionX=-1;selectionY=-1;cx=2;cy=2;won=0;tools=0;
    for(int y=0;y<6;y++)for(int x=0;x<6;x++){
     int v;do{v=rng(6);}while((x>1&&gems[y][x-1]==v&&gems[y][x-2]==v)||(y>1&&gems[y-1][x]==v&&gems[y-2][x]==v));
@@ -50,11 +50,27 @@ public final class MaratTreasures extends MIDlet {
     if(y<4&&v==gems[y+1][x]&&v==gems[y+2][x])return true;
    }return false;
   }
+  private boolean matchedAt(int x,int y){
+   int v=gems[y][x],n=1;
+   for(int a=x-1;a>=0&&gems[y][a]==v;a--)n++;
+   for(int a=x+1;a<6&&gems[y][a]==v;a++)n++;
+   if(n>=3)return true;
+   n=1;
+   for(int a=y-1;a>=0&&gems[a][x]==v;a--)n++;
+   for(int a=y+1;a<6&&gems[a][x]==v;a++)n++;
+   return n>=3;
+  }
+  private boolean validSwap(int x,int y,int a,int b){
+   swap(x,y,a,b);
+   boolean valid=matchedAt(x,y)||matchedAt(a,b);
+   swap(x,y,a,b);
+   return valid;
+  }
   private void swap(int x,int y,int a,int b){int v=gems[y][x];gems[y][x]=gems[b][a];gems[b][a]=v;}
   private boolean possible(){
    for(int y=0;y<6;y++)for(int x=0;x<6;x++){
-    if(x<5&&blocks[y][x]==0&&blocks[y][x+1]==0){swap(x,y,x+1,y);boolean m=match();swap(x,y,x+1,y);if(m)return true;}
-    if(y<5&&blocks[y][x]==0&&blocks[y+1][x]==0){swap(x,y,x,y+1);boolean m=match();swap(x,y,x,y+1);if(m)return true;}
+    if(x<5&&blocks[y][x]==0&&blocks[y][x+1]==0){if(validSwap(x,y,x+1,y))return true;}
+    if(y<5&&blocks[y][x]==0&&blocks[y+1][x]==0){if(validSwap(x,y,x,y+1))return true;}
    }return false;
   }
   private void shuffle(){
@@ -95,13 +111,13 @@ public final class MaratTreasures extends MIDlet {
   }
   private void choose(){
    if(!possible()){shuffle();notice="Перемешано";return;}
-   if(blocks[cy][cx]>0){notice="Фишка закрыта";return;}
+   if(blocks[cy][cx]>0){notice="Фишка закрыта";selectionX=-1;return;}
    if(selectionX<0){selectionX=cx;selectionY=cy;return;}
    if(selectionX==cx&&selectionY==cy){selectionX=-1;return;}
    if(Math.abs(selectionX-cx)+Math.abs(selectionY-cy)!=1){selectionX=cx;selectionY=cy;return;}
-   swap(selectionX,selectionY,cx,cy);
-   if(!match()){swap(selectionX,selectionY,cx,cy);notice="Нет комбинации";}
-   else{moves--;notice="";removeMatches();}
+   if(blocks[selectionY][selectionX]>0||blocks[cy][cx]>0){notice="Фишка закрыта";}
+   else if(!validSwap(selectionX,selectionY,cx,cy)){notice="Нет комбинации";}
+   else{swap(selectionX,selectionY,cx,cy);moves--;notice="";removeMatches();}
    selectionX=-1;save();
   }
   private void win(){won=1;screen=RESULT;coins+=100+min(400,moves*20);stars+=moves>8?3:moves>3?2:1;if(level<1000)level++;save();}

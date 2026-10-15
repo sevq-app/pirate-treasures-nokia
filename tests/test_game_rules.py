@@ -12,10 +12,10 @@ class GameRules(unittest.TestCase):
             kind = (level - 1) % 5
             moves = max(12, 26 - level // 85)
             obstacles = min(11, 2 + ((level - 1) // 50) // 2)
-            goal = (15 + level // 12 if kind == 0 else
+            goal = (15 + level // 80 if kind == 0 else
                     obstacles if kind in (1, 2) else
-                    14 + level // 15 if kind == 3 else
-                    10 + level // 20)
+                    14 + level // 90 if kind == 3 else
+                    10 + level // 125)
             self.assertTrue(1 <= island <= 20)
             self.assertTrue(12 <= moves <= 26)
             self.assertGreater(goal, 0)
@@ -33,6 +33,20 @@ class GameRules(unittest.TestCase):
     def test_booster_and_match_use_shared_win(self):
         self.assertIn("if(done>=goal){win();}", SOURCE)
         self.assertIn("if(done>=goal)win();else if(!possible())shuffle();", SOURCE)
+
+    def test_swaps_only_count_local_matches(self):
+        self.assertIn("private boolean matchedAt(int x,int y)", SOURCE)
+        self.assertIn("matchedAt(x,y)||matchedAt(a,b)", SOURCE)
+        self.assertIn("!validSwap(selectionX,selectionY,cx,cy)", SOURCE)
+
+    def test_locked_gems_cannot_be_swapped(self):
+        self.assertIn("blocks[selectionY][selectionX]>0||blocks[cy][cx]>0", SOURCE)
+
+    def test_objective_scaling_fits_moves(self):
+        for level in range(1, 1001):
+            kind = (level - 1) % 5
+            if kind == 4:
+                self.assertLessEqual(10 + level // 125, 18)
 
     def test_cldc_no_stringbuilder(self):
         self.assertNotIn("StringBuilder", SOURCE)
